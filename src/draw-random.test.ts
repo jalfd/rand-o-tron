@@ -77,3 +77,50 @@ describe("drawWinner", () => {
     });
   });
 });
+
+describe("selectLoser", () => {
+  describe("picks an entry from the given array", () => {
+    it("selects any of the entries in the array", () => {
+      const statistics: Record<string, number> = {};
+
+      const selected = new Set(["me", "you", "them"]);
+      for (let i = 0; i < 10000; ++i) {
+        const loser = drawImpl.selectLoser(selected, "them");
+        if (loser === null) {
+            throw new Error("this should not happen");
+        }
+        statistics[loser] = (statistics[loser] ?? 0) + 1;
+      }
+
+      expect(Object.keys(statistics).sort()).to.deep.equal(["me", "you"]);
+      // loser should be picked evenly, regardless of counters
+      // loser is always one of the names in 'selected'
+    });
+
+    it("approximates an even distribution", () => {
+      const statistics: Record<string, number> = {};
+
+      const selected = new Set(["me", "you", "them"]);
+      for (let i = 0; i < 10000; ++i) {
+        const loser = drawImpl.selectLoser(selected, "them");
+                if (loser === null) {
+            throw new Error("this should not happen");
+        }
+        statistics[loser] = (statistics[loser] ?? 0) + 1;
+      }
+
+      expect(Math.abs(statistics["me"]! / statistics["you"]!)).to.be.closeTo(
+        1,
+        0.1
+      );
+    });
+
+    it("returns null if only one entry was selected", () => {
+      expect(drawImpl.selectLoser(new Set(["me"]), "me")).to.be.null;
+    });
+
+    it("throws if the winner was not selected", () => {
+      expect(() => drawImpl.selectLoser(new Set(["me"]), "you")).to.throw();
+    });
+  });
+});

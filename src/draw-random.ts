@@ -24,11 +24,22 @@ export const drawImpl = {
   },
 
   selectLoser: function (
-    state: State,
     selected: Set<string>,
     winner: string
-  ): string {
-    return "";
+  ): string | null {
+    if (!selected.has(winner)) {
+        throw new Error(`Entry ${winner} was not selected`)
+    }
+
+    const selected_local = new Set(selected);
+    selected_local.delete(winner);
+    if (selected_local.size === 0){
+        return null;
+    }
+
+    const arr = [...selected_local];
+    const idx = Math.floor(Math.random() * arr.length);
+    return arr[idx]!;
   },
 };
 
@@ -39,7 +50,7 @@ export function draw(
 ): string {
   const entries = impl.setupDrawEntries(state, selected);
   const winner = impl.drawWinner(entries);
-  const loser = impl.selectLoser(state, selected, winner);
+  const loser = impl.selectLoser(selected, winner);
   state[loser]! += 1;
   return winner;
 }
