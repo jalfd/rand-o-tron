@@ -124,3 +124,50 @@ describe("selectLoser", () => {
     });
   });
 });
+
+describe("registerSelected", () => {
+  it("adds any selected entries that didn't already exist in state", () => {
+    const state = { me: 3, you: 1, them: 1 };
+    drawImpl.registerSelected(state, new Set(["him", "her"]));
+    expect(state).to.deep.equal({ me: 3, you: 1, them: 1, him: 1, her: 1 });
+  });
+
+  it("does not touch the count of existing entries", () => {
+    const state = { me: 3, you: 1, them: 1 };
+    drawImpl.registerSelected(state, new Set(["me", "you", "them"]));
+    expect(state).to.deep.equal({ me: 3, you: 1, them: 1 });
+  });
+  it("does not remove entries that were not selected", () => {
+    const state = { me: 3, you: 1, them: 1 };
+    drawImpl.registerSelected(state, new Set(["me", "you"]));
+    expect(state.them).to.equal(1);
+  });
+});
+
+describe("updateState", () => {
+  it("resets winner's count to 1", () => {
+    const state = { me: 3, you: 1, them: 1 };
+    drawImpl.updateState(state, "me", "you");
+    expect(state.me).to.equal(1);
+  });
+  it("increments selected loser's count", () => {
+    const state = { me: 3, you: 1, them: 1 };
+    drawImpl.updateState(state, "me", "you");
+    expect(state.you).to.equal(2);
+  });
+  it("ignore if loser is null", () => {
+    const state = { me: 3, you: 1, them: 1 };
+    drawImpl.updateState(state, "me", null);
+    expect(state).to.deep.equal( { me: 1, you: 1, them: 1 });
+  });
+
+  it("throws if winner is not known", () => {
+    const state = { me: 3, you: 1, them: 1 };
+    expect(() => drawImpl.updateState(state, "him", "me")).to.throw();
+  });
+
+  it("throws if loser is not known", () => {
+    const state = { me: 3, you: 1, them: 1 };
+    expect(() => drawImpl.updateState(state, "me", "him")).to.throw();
+  });
+});

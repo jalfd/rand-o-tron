@@ -39,9 +39,24 @@ export const drawImpl = {
     return arr[idx]!;
   },
 
+  registerSelected(state: State, selected: Set<string>): void {
+    for (const name of selected) {
+        if (!Object.hasOwn(state, name)) {
+            state[name] = 1;
+        }
+    }
+  },
+
   updateState(state: State, winner: string, loser: string | null) {
     if (loser) {
+      if (!Object.hasOwn(state, loser)) {
+        throw new Error(`Key ${loser} not found`);
+      }
       state[loser]! += 1;
+    }
+
+    if (!Object.hasOwn(state, winner)) {
+      throw new Error(`Key ${winner} not found`);
     }
     state[winner] = 1;
   },
