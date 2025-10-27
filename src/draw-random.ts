@@ -16,7 +16,11 @@ export const drawImpl = {
   },
 
   drawWinner: function (entries: string[]): string {
-    return "";
+    if (entries.length === 0) {
+        throw new Error("Could not draw from an empty list");
+    }
+    const idx = Math.floor(Math.random() * entries.length);
+    return entries[idx]!;
   },
 
   selectLoser: function (
