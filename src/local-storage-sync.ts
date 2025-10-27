@@ -1,1 +1,1 @@
-// read/write json using local storage
+// read/write json string using local storage

@@ -62,7 +62,9 @@ const drawImpl = {
   },
 };
 
-export function buildDrawImpl() {
+export type DrawImpl = typeof drawImpl;
+
+export function buildDrawImpl(): DrawImpl {
   return { ...drawImpl };
 }
 
@@ -73,7 +75,16 @@ export function draw(
 ): string {
   const entries = impl.setupDrawEntries(state, selected);
   const winner = impl.drawWinner(entries);
-  const loser = impl.selectLoser(selected, winner);
-  impl.updateState(state, winner, loser);
   return winner;
+}
+
+export function updateStatePostDraw(
+  impl: typeof drawImpl,
+  state: State,
+  selected: Set<string>,
+  winner: string,
+) {
+  const loser = impl.selectLoser(selected, winner);
+  impl.registerSelected(state, selected);
+  impl.updateState(state, winner, loser);
 }

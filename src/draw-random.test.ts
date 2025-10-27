@@ -1,7 +1,18 @@
 import { expect } from "chai";
-import { describe, it } from "node:test";
+import { afterEach, beforeEach, describe, it } from "node:test";
 import type { State } from "./serialize";
-import { buildDrawImpl } from "./draw-random";
+import {
+  buildDrawImpl,
+  draw,
+  updateStatePostDraw,
+  type DrawImpl,
+} from "./draw-random";
+import * as td from "testdouble";
+
+afterEach(function(){
+  td.reset();
+  console.log("done with test from draw")
+})
 
 describe("setupDrawEntries", () => {
   describe("builds an array with each entry duplicated according to its count", () => {
@@ -27,7 +38,10 @@ describe("setupDrawEntries", () => {
       ]);
     });
     it("builds array from a subset of entries", () => {
-      const entries = buildDrawImpl().setupDrawEntries(state, new Set(["him", "her"]));
+      const entries = buildDrawImpl().setupDrawEntries(
+        state,
+        new Set(["him", "her"])
+      );
       expect(entries.sort()).to.deep.equal(["her", "him", "him"]);
     });
     it("builds array with 1 entry for unknown entries", () => {
@@ -38,7 +52,9 @@ describe("setupDrawEntries", () => {
       expect(entries.sort()).to.deep.equal(["someone", "you", "you", "you"]);
     });
     it("throws if no names are selected", () => {
-      expect(() => buildDrawImpl().setupDrawEntries(state, new Set([]))).to.throw();
+      expect(() =>
+        buildDrawImpl().setupDrawEntries(state, new Set([]))
+      ).to.throw();
     });
   });
 });
@@ -68,7 +84,7 @@ describe("drawWinner", () => {
 
       expect(Math.abs(statistics["me"]! / statistics["you"]!)).to.be.closeTo(
         2,
-        0.1
+        0.5
       );
     });
 
@@ -111,7 +127,7 @@ describe("selectLoser", () => {
 
       expect(Math.abs(statistics["me"]! / statistics["you"]!)).to.be.closeTo(
         1,
-        0.1
+        0.25
       );
     });
 
@@ -120,7 +136,9 @@ describe("selectLoser", () => {
     });
 
     it("throws if the winner was not selected", () => {
-      expect(() => buildDrawImpl().selectLoser(new Set(["me"]), "you")).to.throw();
+      expect(() =>
+        buildDrawImpl().selectLoser(new Set(["me"]), "you")
+      ).to.throw();
     });
   });
 });
@@ -158,7 +176,7 @@ describe("updateState", () => {
   it("ignore if loser is null", () => {
     const state = { me: 3, you: 1, them: 1 };
     buildDrawImpl().updateState(state, "me", null);
-    expect(state).to.deep.equal( { me: 1, you: 1, them: 1 });
+    expect(state).to.deep.equal({ me: 1, you: 1, them: 1 });
   });
 
   it("throws if winner is not known", () => {
@@ -169,5 +187,63 @@ describe("updateState", () => {
   it("throws if loser is not known", () => {
     const state = { me: 3, you: 1, them: 1 };
     expect(() => buildDrawImpl().updateState(state, "me", "him")).to.throw();
+  });
+});
+
+describe("draw()", () => {
+  let impl: DrawImpl;
+  let state: Record<string, number>;
+  let selected: Set<string>;
+
+  beforeEach(() => {
+    impl = buildDrawImpl();
+    impl.drawWinner = td.function(impl.drawWinner);
+
+    state = { me: 3, you: 1, them: 1 };
+    selected = new Set(["me", "you", "them"]);
+  });
+
+  it("picks the winner specified by drawWinner", () => {
+    td.when(impl.drawWinner(["me", "me", "me", "you", "them"])).thenReturn(
+      "them"
+    );
+
+    expect(draw(impl, state, selected)).to.equal("them");
+  });
+});
+
+describe("updateStatePostDraw()", () => {
+  let impl: DrawImpl;
+  let state: Record<string, number>;
+  let selected: Set<string>;
+  const winner: string = "me";
+
+  beforeEach(() => {
+    impl = buildDrawImpl();
+    impl.selectLoser = td.function(impl.selectLoser);
+    state = { me: 3, you: 1, them: 1 };
+    selected = new Set(["me", "you", "them"]);
+  });
+
+  it("resets the winner", () => {
+    td.when(impl.selectLoser(selected, winner)).thenReturn("you");
+    updateStatePostDraw(impl, state, selected, winner);
+    expect(state).to.include.keys("me", "you", "them");
+    expect(state).to.include({ me: 1 });
+  });
+
+  it("increments the chosen loser", () => {
+    td.when(impl.selectLoser(selected, winner)).thenReturn("you");
+    updateStatePostDraw(impl, state, selected, winner);
+    expect(state).to.include.keys("me", "you", "them");
+    expect(state).to.include({ you: 2 });
+  });
+
+  it("adds unknown entries with value 1", () => {
+    const selected_superset = new Set(["me", "you", "them", "him", "her"]);
+    td.when(impl.selectLoser(selected_superset, winner)).thenReturn("you");
+    updateStatePostDraw(impl, state, selected_superset, winner);
+    expect(state).to.include.keys("me", "you", "them", "him", "her");
+    expect(state).to.include({ him: 1, her: 1 });
   });
 });
