@@ -2,7 +2,7 @@
 
 import type { State } from "./serialize";
 
-export const drawImpl = {
+const drawImpl = {
   setupDrawEntries: function (state: State, selected: Set<string>): string[] {
     if (selected.size == 0) {
       throw new Error("No names selected");
@@ -41,9 +41,9 @@ export const drawImpl = {
 
   registerSelected(state: State, selected: Set<string>): void {
     for (const name of selected) {
-        if (!Object.hasOwn(state, name)) {
-            state[name] = 1;
-        }
+      if (!Object.hasOwn(state, name)) {
+        state[name] = 1;
+      }
     }
   },
 
@@ -61,6 +61,10 @@ export const drawImpl = {
     state[winner] = 1;
   },
 };
+
+export function buildDrawImpl() {
+  return { ...drawImpl };
+}
 
 export function draw(
   impl: typeof drawImpl,

@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { describe, it } from "node:test";
 import type { State } from "./serialize";
-import { drawImpl } from "./draw-random";
+import { buildDrawImpl } from "./draw-random";
 
 describe("setupDrawEntries", () => {
   describe("builds an array with each entry duplicated according to its count", () => {
@@ -12,7 +12,7 @@ describe("setupDrawEntries", () => {
       her: 1,
     };
     it("builds array from all known entries", () => {
-      const entries = drawImpl.setupDrawEntries(
+      const entries = buildDrawImpl().setupDrawEntries(
         state,
         new Set(["me", "you", "him", "her"])
       );
@@ -27,18 +27,18 @@ describe("setupDrawEntries", () => {
       ]);
     });
     it("builds array from a subset of entries", () => {
-      const entries = drawImpl.setupDrawEntries(state, new Set(["him", "her"]));
+      const entries = buildDrawImpl().setupDrawEntries(state, new Set(["him", "her"]));
       expect(entries.sort()).to.deep.equal(["her", "him", "him"]);
     });
     it("builds array with 1 entry for unknown entries", () => {
-      const entries = drawImpl.setupDrawEntries(
+      const entries = buildDrawImpl().setupDrawEntries(
         state,
         new Set(["you", "someone"])
       );
       expect(entries.sort()).to.deep.equal(["someone", "you", "you", "you"]);
     });
     it("throws if no names are selected", () => {
-      expect(() => drawImpl.setupDrawEntries(state, new Set([]))).to.throw();
+      expect(() => buildDrawImpl().setupDrawEntries(state, new Set([]))).to.throw();
     });
   });
 });
@@ -50,7 +50,7 @@ describe("drawWinner", () => {
 
       const entries = ["me", "me", "you"];
       for (let i = 0; i < 10000; ++i) {
-        const winner = drawImpl.drawWinner(entries);
+        const winner = buildDrawImpl().drawWinner(entries);
         statistics[winner] = (statistics[winner] ?? 0) + 1;
       }
 
@@ -62,7 +62,7 @@ describe("drawWinner", () => {
 
       const entries = ["me", "me", "you"];
       for (let i = 0; i < 10000; ++i) {
-        const winner = drawImpl.drawWinner(entries);
+        const winner = buildDrawImpl().drawWinner(entries);
         statistics[winner] = (statistics[winner] ?? 0) + 1;
       }
 
@@ -73,7 +73,7 @@ describe("drawWinner", () => {
     });
 
     it("throws on an empty list of entries", () => {
-      expect(() => drawImpl.drawWinner([])).to.throw();
+      expect(() => buildDrawImpl().drawWinner([])).to.throw();
     });
   });
 });
@@ -85,7 +85,7 @@ describe("selectLoser", () => {
 
       const selected = new Set(["me", "you", "them"]);
       for (let i = 0; i < 10000; ++i) {
-        const loser = drawImpl.selectLoser(selected, "them");
+        const loser = buildDrawImpl().selectLoser(selected, "them");
         if (loser === null) {
           throw new Error("this should not happen");
         }
@@ -102,7 +102,7 @@ describe("selectLoser", () => {
 
       const selected = new Set(["me", "you", "them"]);
       for (let i = 0; i < 10000; ++i) {
-        const loser = drawImpl.selectLoser(selected, "them");
+        const loser = buildDrawImpl().selectLoser(selected, "them");
         if (loser === null) {
           throw new Error("this should not happen");
         }
@@ -116,11 +116,11 @@ describe("selectLoser", () => {
     });
 
     it("returns null if only one entry was selected", () => {
-      expect(drawImpl.selectLoser(new Set(["me"]), "me")).to.be.null;
+      expect(buildDrawImpl().selectLoser(new Set(["me"]), "me")).to.be.null;
     });
 
     it("throws if the winner was not selected", () => {
-      expect(() => drawImpl.selectLoser(new Set(["me"]), "you")).to.throw();
+      expect(() => buildDrawImpl().selectLoser(new Set(["me"]), "you")).to.throw();
     });
   });
 });
@@ -128,18 +128,18 @@ describe("selectLoser", () => {
 describe("registerSelected", () => {
   it("adds any selected entries that didn't already exist in state", () => {
     const state = { me: 3, you: 1, them: 1 };
-    drawImpl.registerSelected(state, new Set(["him", "her"]));
+    buildDrawImpl().registerSelected(state, new Set(["him", "her"]));
     expect(state).to.deep.equal({ me: 3, you: 1, them: 1, him: 1, her: 1 });
   });
 
   it("does not touch the count of existing entries", () => {
     const state = { me: 3, you: 1, them: 1 };
-    drawImpl.registerSelected(state, new Set(["me", "you", "them"]));
+    buildDrawImpl().registerSelected(state, new Set(["me", "you", "them"]));
     expect(state).to.deep.equal({ me: 3, you: 1, them: 1 });
   });
   it("does not remove entries that were not selected", () => {
     const state = { me: 3, you: 1, them: 1 };
-    drawImpl.registerSelected(state, new Set(["me", "you"]));
+    buildDrawImpl().registerSelected(state, new Set(["me", "you"]));
     expect(state.them).to.equal(1);
   });
 });
@@ -147,27 +147,27 @@ describe("registerSelected", () => {
 describe("updateState", () => {
   it("resets winner's count to 1", () => {
     const state = { me: 3, you: 1, them: 1 };
-    drawImpl.updateState(state, "me", "you");
+    buildDrawImpl().updateState(state, "me", "you");
     expect(state.me).to.equal(1);
   });
   it("increments selected loser's count", () => {
     const state = { me: 3, you: 1, them: 1 };
-    drawImpl.updateState(state, "me", "you");
+    buildDrawImpl().updateState(state, "me", "you");
     expect(state.you).to.equal(2);
   });
   it("ignore if loser is null", () => {
     const state = { me: 3, you: 1, them: 1 };
-    drawImpl.updateState(state, "me", null);
+    buildDrawImpl().updateState(state, "me", null);
     expect(state).to.deep.equal( { me: 1, you: 1, them: 1 });
   });
 
   it("throws if winner is not known", () => {
     const state = { me: 3, you: 1, them: 1 };
-    expect(() => drawImpl.updateState(state, "him", "me")).to.throw();
+    expect(() => buildDrawImpl().updateState(state, "him", "me")).to.throw();
   });
 
   it("throws if loser is not known", () => {
     const state = { me: 3, you: 1, them: 1 };
-    expect(() => drawImpl.updateState(state, "me", "him")).to.throw();
+    expect(() => buildDrawImpl().updateState(state, "me", "him")).to.throw();
   });
 });
