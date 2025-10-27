@@ -1,0 +1,1 @@
+// drive the page: populate list of names, let user add new names (or merge), invoke draw-random and render result
