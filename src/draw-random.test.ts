@@ -87,7 +87,7 @@ describe("selectLoser", () => {
       for (let i = 0; i < 10000; ++i) {
         const loser = drawImpl.selectLoser(selected, "them");
         if (loser === null) {
-            throw new Error("this should not happen");
+          throw new Error("this should not happen");
         }
         statistics[loser] = (statistics[loser] ?? 0) + 1;
       }
@@ -103,8 +103,8 @@ describe("selectLoser", () => {
       const selected = new Set(["me", "you", "them"]);
       for (let i = 0; i < 10000; ++i) {
         const loser = drawImpl.selectLoser(selected, "them");
-                if (loser === null) {
-            throw new Error("this should not happen");
+        if (loser === null) {
+          throw new Error("this should not happen");
         }
         statistics[loser] = (statistics[loser] ?? 0) + 1;
       }

@@ -5,7 +5,7 @@ import type { State } from "./serialize";
 export const drawImpl = {
   setupDrawEntries: function (state: State, selected: Set<string>): string[] {
     if (selected.size == 0) {
-        throw new Error("No names selected");
+      throw new Error("No names selected");
     }
     let result: string[] = [];
     for (const name of selected) {
@@ -17,29 +17,33 @@ export const drawImpl = {
 
   drawWinner: function (entries: string[]): string {
     if (entries.length === 0) {
-        throw new Error("Could not draw from an empty list");
+      throw new Error("Could not draw from an empty list");
     }
     const idx = Math.floor(Math.random() * entries.length);
     return entries[idx]!;
   },
 
-  selectLoser: function (
-    selected: Set<string>,
-    winner: string
-  ): string | null {
+  selectLoser: function (selected: Set<string>, winner: string): string | null {
     if (!selected.has(winner)) {
-        throw new Error(`Entry ${winner} was not selected`)
+      throw new Error(`Entry ${winner} was not selected`);
     }
 
     const selected_local = new Set(selected);
     selected_local.delete(winner);
-    if (selected_local.size === 0){
-        return null;
+    if (selected_local.size === 0) {
+      return null;
     }
 
     const arr = [...selected_local];
     const idx = Math.floor(Math.random() * arr.length);
     return arr[idx]!;
+  },
+
+  updateState(state: State, winner: string, loser: string | null) {
+    if (loser) {
+      state[loser]! += 1;
+    }
+    state[winner] = 1;
   },
 };
 
@@ -51,6 +55,6 @@ export function draw(
   const entries = impl.setupDrawEntries(state, selected);
   const winner = impl.drawWinner(entries);
   const loser = impl.selectLoser(selected, winner);
-  state[loser]! += 1;
+  impl.updateState(state, winner, loser);
   return winner;
 }
