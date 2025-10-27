@@ -1,5 +1,3 @@
-// given a state object (names -> counter), draw one and increment counters suitably
-
 import type { State } from "./serialize";
 
 const drawImpl = {
