@@ -119,7 +119,9 @@ const list_container = htmlElement<HTMLDivElement>("list-container");
 
 // logic
 function getCheckboxes() {
-  return Array.from(document.querySelectorAll<HTMLInputElement>("#list-container label input"));
+  return Array.from(
+    document.querySelectorAll<HTMLInputElement>("#list-container label input")
+  );
 }
 function addNewName(name: string) {
   if (name.trim().length === 0) {
@@ -140,7 +142,9 @@ function addNewName(name: string) {
   label.appendChild(span);
   list_container.appendChild(label);
 
-  checkbox.addEventListener("change", () => {ui_state.toggleSelected(name, checkbox.checked)});
+  checkbox.addEventListener("change", () => {
+    ui_state.toggleSelected(name, checkbox.checked);
+  });
 }
 
 function repopulateList(state: State) {
@@ -182,13 +186,13 @@ function showMergeUi() {
 }
 
 function updateCosmeticButtonStates() {
-  ui_state.addEventListener("selectionChanged", (evt => {
+  ui_state.addEventListener("selectionChanged", (evt) => {
     const selection = (evt as CustomEvent).detail.selection;
     choose_button.disabled = selection.size < 2;
     merge_button.disabled = selection.size < 2;
-    delete_button.disabled = selection.size< 1;
+    delete_button.disabled = selection.size < 1;
     merge_container.style.visibility = "hidden";
-  }));
+  });
 
   const selection = ui_state.currentSelection();
   choose_button.disabled = selection.size < 2;
@@ -197,48 +201,14 @@ function updateCosmeticButtonStates() {
   merge_container.style.visibility = "hidden";
 }
 
-function logEvent(evt: Event) {
-  const props = ["key", "code", "data", "value"];
-  const elem = document.getElementById("eventlog") as HTMLPreElement;
-
-  const props_string = props
-    .filter((prop) => prop in evt)
-    .map((prop) => `${prop}: '${(evt as any)[prop]}'`);
-  elem.textContent += `${evt.type}: ${props_string.join(",")}` + "\n";
-}
-
 function connectHandlers(ui_state: UiState) {
   add_name_field.addEventListener("keyup", (evt) => {
-    logEvent(evt);
     if (evt.key === "Enter") {
       addNewName(add_name_field.value);
       ui_state.registerNewName(add_name_field.value);
       add_name_field.value = "";
       evt.preventDefault();
     }
-  });
-  add_name_field.addEventListener("compositionend", (evt) => {
-    logEvent(evt);
-    // addNewName(add_name_field.value);
-    // ui_state.registerNewName(add_name_field.value);
-    // add_name_field.value = "";
-    // evt.preventDefault();
-  });
-
-  add_name_field.addEventListener("change", (evt) => {
-    logEvent(evt);
-    // addNewName(add_name_field.value);
-    // ui_state.registerNewName(add_name_field.value);
-    // add_name_field.value = "";
-    // evt.preventDefault();
-  });
-
-  add_name_field.addEventListener("input", (evt) => {
-    logEvent(evt);
-    // addNewName(add_name_field.value);
-    // ui_state.registerNewName(add_name_field.value);
-    // add_name_field.value = "";
-    // evt.preventDefault();
   });
 
   choose_button.addEventListener("click", () => {
