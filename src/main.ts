@@ -177,6 +177,12 @@ function connectHandlers(ui_state: UiState) {
       evt.preventDefault();
     }
   });
+  add_name_field.addEventListener("compositionend", (evt) => {
+      addNewName(add_name_field.value);
+      ui_state.registerNewName(add_name_field.value);
+      add_name_field.value = "";
+      evt.preventDefault();
+  });
 
   choose_button.addEventListener("click", () => {
     const winner = ui_state.execute();
