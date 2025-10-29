@@ -105,3 +105,11 @@ export function mergeNames(state: State, names: Set<string>, new_name: string) {
   }
   state[new_name] = min_count;
 }
+
+export function deleteNames(state: State, names: Set<string>) {
+  for (const key of Object.keys(state)) {
+    if (names.has(key)) {
+      delete state[key];
+    }
+  }
+}

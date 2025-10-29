@@ -2,6 +2,7 @@
 
 import {
   buildDrawImpl,
+  deleteNames,
   draw,
   mergeNames,
   registerNewNames,
@@ -47,21 +48,29 @@ class UiState {
     return new Set(this.selection);
   }
 
-  public resetState(state: State) {}
-
   public execute(): string {
     const winner = draw(this.impl, this.state, this.selection);
     updateStatePostDraw(this.impl, this.state, this.selection, winner);
     writeStateToStore(this.state);
-    console.log("saving", winner, this.state);
     return winner;
+  }
+
+  public reset(state: State) {
+    if (state !== this.state) {
+      this.state = {...state};
+    }
+    this.selection = new Set();
+    writeStateToStore(this.state);
   }
 
   public merge(merge_names: Set<string>, new_name: string) {
     mergeNames(this.state, merge_names, new_name);
-    this.selection = new Set();
+    this.reset(this.state);
+  }
 
-    write(serialize(this.state));
+  public deleteSelected() {
+    deleteNames(this.state, this.selection);
+    this.reset(this.state);
   }
 
   public rollback() {
@@ -86,6 +95,7 @@ function htmlElement<T>(id: string) {
 }
 const choose_button = htmlElement<HTMLButtonElement>("choose_button");
 const merge_button = htmlElement<HTMLButtonElement>("merge_button");
+const delete_button = htmlElement<HTMLButtonElement>("delete_button");
 const rollback_button = htmlElement<HTMLButtonElement>("rollback_button");
 const result_label = htmlElement<HTMLHeadingElement>("result");
 const merge_container = htmlElement<HTMLDivElement>("merge-details-container");
@@ -106,7 +116,8 @@ function addNewName(name: string) {
   names_list.appendChild(opt);
 }
 
-function populateList(state: State) {
+function repopulateList(state: State) {
+  names_list.replaceChildren();
   for (const key of Object.keys(state)) {
     addNewName(key);
   }
@@ -130,8 +141,7 @@ function showMergeUi(ui_state: UiState) {
     const merge_name = merge_select.value;
     ui_state.merge(names_to_merge, merge_name);
     merge_container.style.visibility = "hidden";
-    names_list.replaceChildren();
-    populateList(ui_state.currentState());
+    repopulateList(ui_state.currentState());
   });
 
   for (const name of names_to_merge) {
@@ -148,10 +158,14 @@ function updateCosmeticButtonStates() {
   names_list.addEventListener("change", () => {
     choose_button.disabled = names_list.selectedOptions.length < 2;
     merge_button.disabled = names_list.selectedOptions.length < 2;
+    delete_button.disabled = names_list.selectedOptions.length < 1;
+    merge_container.style.visibility = "hidden";
   });
 
   choose_button.disabled = names_list.selectedOptions.length < 2;
   merge_button.disabled = names_list.selectedOptions.length < 2;
+  delete_button.disabled = names_list.selectedOptions.length < 1;
+  merge_container.style.visibility = "hidden";
 }
 
 function connectHandlers(ui_state: UiState) {
@@ -180,11 +194,16 @@ function connectHandlers(ui_state: UiState) {
   merge_button.addEventListener("click", () => {
     showMergeUi(ui_state);
   });
+  delete_button.addEventListener("click", () => {
+    if (confirm(`Are you sure you want to delete these:\n${[...ui_state.currentSelection()].join("\n")}`))
+    ui_state.deleteSelected();
+    repopulateList(ui_state.currentState());
+  });
 }
 
 // run
 const init_state = readStateFromStore();
 const ui_state = new UiState(init_state);
-populateList(init_state);
+repopulateList(init_state);
 connectHandlers(ui_state);
 updateCosmeticButtonStates();
