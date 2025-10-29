@@ -22,11 +22,26 @@ function readStateFromStore(): State {
   return state;
 }
 
-class UiState {
+class UiState extends EventTarget {
   constructor(private state: State) {
+    super();
     this.impl = buildDrawImpl();
     this.initial_state = { ...state };
     this.selection = new Set();
+  }
+
+  public toggleSelected(name: string, selected: boolean) {
+    if (selected) {
+      this.selection.add(name);
+    } else {
+      this.selection.delete(name);
+    }
+
+    this.dispatchEvent(
+      new CustomEvent("selectionChanged", {
+        detail: { selection: new Set(this.selection) },
+      })
+    );
   }
 
   public updateSelection(selection: HTMLCollectionOf<HTMLOptionElement>) {
@@ -57,7 +72,7 @@ class UiState {
 
   public reset(state: State) {
     if (state !== this.state) {
-      this.state = {...state};
+      this.state = { ...state };
     }
     this.selection = new Set();
     writeStateToStore(this.state);
@@ -84,46 +99,58 @@ class UiState {
   private selection: Set<string>;
 }
 
-// grab html elements
-const names_list = document.getElementById("select_names") as HTMLSelectElement;
-const add_name_field = document.getElementById(
-  "name_to_add"
-) as HTMLInputElement;
+// setup state
+const init_state = readStateFromStore();
+const ui_state = new UiState(init_state);
 
+// grab html elements
 function htmlElement<T>(id: string) {
   return document.getElementById(id) as T;
 }
+// todo const names_list = htmlElement<HTMLSelectElement>("select_names");
+const add_name_field = htmlElement<HTMLInputElement>("name_to_add");
 const choose_button = htmlElement<HTMLButtonElement>("choose_button");
 const merge_button = htmlElement<HTMLButtonElement>("merge_button");
 const delete_button = htmlElement<HTMLButtonElement>("delete_button");
 const rollback_button = htmlElement<HTMLButtonElement>("rollback_button");
 const result_label = htmlElement<HTMLHeadingElement>("result");
 const merge_container = htmlElement<HTMLDivElement>("merge-details-container");
+const list_container = htmlElement<HTMLDivElement>("list-container");
 
 // logic
+function getCheckboxes() {
+  return Array.from(document.querySelectorAll<HTMLInputElement>("#list-container label input"));
+}
 function addNewName(name: string) {
   if (name.trim().length === 0) {
     return;
   }
-  for (const child of Array.from(names_list.childNodes)) {
-    if (child.textContent === name) {
-      return;
-    }
+
+  if (getCheckboxes().some((cb) => cb.value === name)) {
+    return;
   }
 
-  const opt = document.createElement("option");
-  opt.textContent = name;
-  names_list.appendChild(opt);
+  const span = document.createElement("span");
+  const label = document.createElement("label");
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.value = name;
+  span.textContent = name;
+  label.appendChild(checkbox);
+  label.appendChild(span);
+  list_container.appendChild(label);
+
+  checkbox.addEventListener("change", () => {ui_state.toggleSelected(name, checkbox.checked)});
 }
 
 function repopulateList(state: State) {
-  names_list.replaceChildren();
+  list_container.replaceChildren();
   for (const key of Object.keys(state)) {
     addNewName(key);
   }
 }
 
-function showMergeUi(ui_state: UiState) {
+function showMergeUi() {
   const names_to_merge = ui_state.currentSelection();
 
   const merge_instructions = document.createElement("label");
@@ -155,25 +182,29 @@ function showMergeUi(ui_state: UiState) {
 }
 
 function updateCosmeticButtonStates() {
-  names_list.addEventListener("change", () => {
-    choose_button.disabled = names_list.selectedOptions.length < 2;
-    merge_button.disabled = names_list.selectedOptions.length < 2;
-    delete_button.disabled = names_list.selectedOptions.length < 1;
+  ui_state.addEventListener("selectionChanged", (evt => {
+    const selection = (evt as CustomEvent).detail.selection;
+    choose_button.disabled = selection.size < 2;
+    merge_button.disabled = selection.size < 2;
+    delete_button.disabled = selection.size< 1;
     merge_container.style.visibility = "hidden";
-  });
+  }));
 
-  choose_button.disabled = names_list.selectedOptions.length < 2;
-  merge_button.disabled = names_list.selectedOptions.length < 2;
-  delete_button.disabled = names_list.selectedOptions.length < 1;
+  const selection = ui_state.currentSelection();
+  choose_button.disabled = selection.size < 2;
+  merge_button.disabled = selection.size < 2;
+  delete_button.disabled = selection.size < 1;
   merge_container.style.visibility = "hidden";
 }
 
 function logEvent(evt: Event) {
   const props = ["key", "code", "data", "value"];
-  const elem = document.getElementById('eventlog') as HTMLPreElement;
+  const elem = document.getElementById("eventlog") as HTMLPreElement;
 
-  const props_string = props.filter(prop => (prop in evt)).map(prop => `${prop}: '${(evt as any)[prop]}'`);
-  elem.textContent += `${evt.type}: ${props_string.join(',')}` + '\n';
+  const props_string = props
+    .filter((prop) => prop in evt)
+    .map((prop) => `${prop}: '${(evt as any)[prop]}'`);
+  elem.textContent += `${evt.type}: ${props_string.join(",")}` + "\n";
 }
 
 function connectHandlers(ui_state: UiState) {
@@ -187,27 +218,27 @@ function connectHandlers(ui_state: UiState) {
     }
   });
   add_name_field.addEventListener("compositionend", (evt) => {
-      logEvent(evt);
-      // addNewName(add_name_field.value);
-      // ui_state.registerNewName(add_name_field.value);
-      // add_name_field.value = "";
-      // evt.preventDefault();
+    logEvent(evt);
+    // addNewName(add_name_field.value);
+    // ui_state.registerNewName(add_name_field.value);
+    // add_name_field.value = "";
+    // evt.preventDefault();
   });
 
-    add_name_field.addEventListener("change", (evt) => {
-      logEvent(evt);
-      // addNewName(add_name_field.value);
-      // ui_state.registerNewName(add_name_field.value);
-      // add_name_field.value = "";
-      // evt.preventDefault();
+  add_name_field.addEventListener("change", (evt) => {
+    logEvent(evt);
+    // addNewName(add_name_field.value);
+    // ui_state.registerNewName(add_name_field.value);
+    // add_name_field.value = "";
+    // evt.preventDefault();
   });
 
-      add_name_field.addEventListener("input", (evt) => {
-      logEvent(evt);
-      // addNewName(add_name_field.value);
-      // ui_state.registerNewName(add_name_field.value);
-      // add_name_field.value = "";
-      // evt.preventDefault();
+  add_name_field.addEventListener("input", (evt) => {
+    logEvent(evt);
+    // addNewName(add_name_field.value);
+    // ui_state.registerNewName(add_name_field.value);
+    // add_name_field.value = "";
+    // evt.preventDefault();
   });
 
   choose_button.addEventListener("click", () => {
@@ -215,27 +246,27 @@ function connectHandlers(ui_state: UiState) {
     result_label.textContent = winner;
   });
 
-  names_list.addEventListener("change", () => {
-    ui_state.updateSelection(names_list.selectedOptions);
-  });
-
   rollback_button.addEventListener("click", () => {
     ui_state.rollback();
   });
 
   merge_button.addEventListener("click", () => {
-    showMergeUi(ui_state);
+    showMergeUi();
   });
   delete_button.addEventListener("click", () => {
-    if (confirm(`Are you sure you want to delete these:\n${[...ui_state.currentSelection()].join("\n")}`))
-    ui_state.deleteSelected();
+    if (
+      confirm(
+        `Are you sure you want to delete these:\n${[
+          ...ui_state.currentSelection(),
+        ].join("\n")}`
+      )
+    )
+      ui_state.deleteSelected();
     repopulateList(ui_state.currentState());
   });
 }
 
 // run
-const init_state = readStateFromStore();
-const ui_state = new UiState(init_state);
 repopulateList(init_state);
 connectHandlers(ui_state);
 updateCosmeticButtonStates();

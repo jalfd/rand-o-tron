@@ -45,6 +45,15 @@
         grid-row: 3;
         grid-column: 2;
       }
+
+      .cell-list label {
+        width: 100%;
+        display: block;
+      }
+      .cell-list input {
+        width: auto;
+      }
+
       select,
       input {
         width: 100%;
@@ -62,10 +71,8 @@
     <script type="module" src="main.js"></script>
       <div class="grid">
         <div class="cell-list">
-          <label>
-            Select the names you want to pick from
-            <select id="select_names" multiple="true"></select>
-          </label>
+            <span>Select the names you want to pick from</span>
+            <div id="list-container"></div>
         </div>
         <div class="cell-go">
           <input type="button" id="choose_button" value="Choose"/>
