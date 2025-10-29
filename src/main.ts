@@ -169,7 +169,7 @@ function updateCosmeticButtonStates() {
 }
 
 function connectHandlers(ui_state: UiState) {
-  add_name_field.addEventListener("keypress", (evt) => {
+  add_name_field.addEventListener("keyup", (evt) => {
     if (evt.key === "Enter") {
       addNewName(add_name_field.value);
       ui_state.registerNewName(add_name_field.value);
@@ -178,6 +178,13 @@ function connectHandlers(ui_state: UiState) {
     }
   });
   add_name_field.addEventListener("compositionend", (evt) => {
+      addNewName(add_name_field.value);
+      ui_state.registerNewName(add_name_field.value);
+      add_name_field.value = "";
+      evt.preventDefault();
+  });
+
+    add_name_field.addEventListener("change", (evt) => {
       addNewName(add_name_field.value);
       ui_state.registerNewName(add_name_field.value);
       add_name_field.value = "";
