@@ -168,8 +168,17 @@ function updateCosmeticButtonStates() {
   merge_container.style.visibility = "hidden";
 }
 
+function logEvent(evt: Event) {
+  const props = ["key", "code", "data", "value"];
+  const elem = document.getElementById('eventlog') as HTMLPreElement;
+
+  const props_string = props.filter(prop => (prop in evt)).map(prop => `${prop}: '${(evt as any)[prop]}'`);
+  elem.textContent += `${evt.type}: ${props_string.join(',')}` + '\n';
+}
+
 function connectHandlers(ui_state: UiState) {
   add_name_field.addEventListener("keyup", (evt) => {
+    logEvent(evt);
     if (evt.key === "Enter") {
       addNewName(add_name_field.value);
       ui_state.registerNewName(add_name_field.value);
@@ -178,17 +187,27 @@ function connectHandlers(ui_state: UiState) {
     }
   });
   add_name_field.addEventListener("compositionend", (evt) => {
-      addNewName(add_name_field.value);
-      ui_state.registerNewName(add_name_field.value);
-      add_name_field.value = "";
-      evt.preventDefault();
+      logEvent(evt);
+      // addNewName(add_name_field.value);
+      // ui_state.registerNewName(add_name_field.value);
+      // add_name_field.value = "";
+      // evt.preventDefault();
   });
 
     add_name_field.addEventListener("change", (evt) => {
-      addNewName(add_name_field.value);
-      ui_state.registerNewName(add_name_field.value);
-      add_name_field.value = "";
-      evt.preventDefault();
+      logEvent(evt);
+      // addNewName(add_name_field.value);
+      // ui_state.registerNewName(add_name_field.value);
+      // add_name_field.value = "";
+      // evt.preventDefault();
+  });
+
+      add_name_field.addEventListener("input", (evt) => {
+      logEvent(evt);
+      // addNewName(add_name_field.value);
+      // ui_state.registerNewName(add_name_field.value);
+      // add_name_field.value = "";
+      // evt.preventDefault();
   });
 
   choose_button.addEventListener("click", () => {
