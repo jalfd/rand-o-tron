@@ -29,7 +29,7 @@
         grid-row: 1;
         grid-column: 2;
       }
-      .grid > .cell-accept {
+      .grid > .cell-rollback {
         grid-row: 1;
         grid-column: 3;
       }
@@ -45,10 +45,17 @@
         grid-row: 3;
         grid-column: 2;
       }
-      select, input {
+      select,
+      input {
         width: 100%;
-        }
-        select {height: 100%;}
+      }
+      select {
+        height: 100%;
+      }
+
+      .merge-details-container {
+        visibility: "hidden";
+      }
     </style>
   </head>
   <body>
@@ -61,11 +68,24 @@
             <select id="select_names" multiple="true"></select>
           </label>
         </div>
-        <div class="cell-go">    <input type="button" id="choose_button" value="Choose" /></div>
-        <div class="cell-accept">   <input type="button" id="accept_button" value="Accept" /></div>
-        <div class="cell-result"><h1 id="result">boom</h1></div>
-        <div class="cell-add">    <label>Add new name<input id="name_to_add" type="text" /></label></div>
-        <div class="cell-merge">    <input type="button" id="merge_button" value="Merge selected names" /></div>
+        <div class="cell-go">
+          <input type="button" id="choose_button" value="Choose" />
+        </div>
+        <div class="cell-rollback">
+          <input
+            type="button"
+            id="rollback_button"
+            value="Rollback"
+          />
+        </div>
+        <div class="cell-result"><h1 id="result"></h1></div>
+        <div class="cell-add">
+          <label>Add new name<input id="name_to_add" type="text" /></label>
+        </div>
+        <div class="cell-merge">
+          <input type="button" id="merge_button" value="Merge selected names" />
+          <div id="merge-details-container"></div>
+        </div>
       </div>
     </form>
   </body>

@@ -67,7 +67,7 @@ export function buildDrawImpl(): DrawImpl {
 }
 
 export function draw(
-  impl: typeof drawImpl,
+  impl: DrawImpl,
   state: State,
   selected: Set<string>
 ): string {
@@ -77,12 +77,31 @@ export function draw(
 }
 
 export function updateStatePostDraw(
-  impl: typeof drawImpl,
+  impl: DrawImpl,
   state: State,
   selected: Set<string>,
-  winner: string,
+  winner: string
 ) {
   const loser = impl.selectLoser(selected, winner);
   impl.registerSelected(state, selected);
   impl.updateState(state, winner, loser);
+}
+
+export function registerNewNames(
+  impl: DrawImpl,
+  state: State,
+  names: Set<string>
+) {
+  impl.registerSelected(state, names);
+}
+
+export function mergeNames(state: State, names: Set<string>, new_name: string) {
+  let min_count = Number.POSITIVE_INFINITY;
+  for (const key of Object.keys(state)) {
+    if (names.has(key)) {
+      min_count = Math.min(min_count, state[key]!);
+      delete state[key];
+    }
+  }
+  state[new_name] = min_count;
 }
